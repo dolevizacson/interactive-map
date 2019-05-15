@@ -1,3 +1,6 @@
+import BadAddressError from '../errors/BadAddressError';
+import NoRouteError from '../errors/NoRouteError';
+
 class MapService {
   constructor() {
     this.distanceMatrix = new window.google.maps.DistanceMatrixService();
@@ -32,18 +35,8 @@ class MapService {
     this.autocomplete.addListener('place_changed', () => {
       const place = this.autocomplete.getPlace();
       let address = '';
-      if (place.address_components) {
-        address = [
-          (place.address_components[1] &&
-            place.address_components[1].short_name) ||
-            '',
-          (place.address_components[0] &&
-            place.address_components[0].short_name) ||
-            '',
-          (place.address_components[2] &&
-            place.address_components[2].short_name) ||
-            '',
-        ].join(' ');
+      if (place.formatted_address) {
+        address = place.formatted_address;
         return callback(address);
       }
     });
@@ -72,7 +65,7 @@ class MapService {
         if (status === 'OK') {
           return resolve(response[0].geometry.location);
         } else {
-          return reject(`Location not found: ${status}`);
+          return reject(new BadAddressError(`Location not found: ${status}`));
         }
       });
     });
@@ -142,7 +135,7 @@ class MapService {
             this.directionsRenderer.setDirections(response);
             return resolve();
           } else {
-            return reject(new Error(`No route possible ${status}`));
+            return reject(new NoRouteError(`No route possible ${status}`));
           }
         }
       );

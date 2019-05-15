@@ -7,6 +7,9 @@ import mapService from '../services/MapsService';
 // components
 import TimeCalculator from './TimeCalculator';
 
+// error handlers
+import errorHandler from '../errors/errorHandler';
+
 // style
 const InteractiveMapStyle = styled.div`
   ${props => props.theme.div}
@@ -39,6 +42,7 @@ const MapHeaderStyle = styled.div`
   height: 2vw;
   font-weight: bold;
   font-size: 0.8rem;
+  ${props => props.theme.media.tablet`font-size: 8px`}
 `;
 
 const AutoComplete = styled.div`
@@ -53,14 +57,15 @@ const AutoCompleteInputContainerStyle = styled.div`
   border: solid 1px;
   border-radius: 6px;
   ${props => props.theme.borderColor.grey3}
+  ${props => props.theme.media.tablet`padding: 0`}
 `;
 const AutoCompleteInputStyle = styled.input.attrs({
   id: 'autoComplete',
 })`
   width: 28vw;
-
   border: transparent;
   outline: 0 none;
+  ${props => props.theme.media.tablet`font-size: 8px`}
 `;
 const AutoCompleteButtonContainerStyle = styled.div`
   cursor: pointer;
@@ -68,6 +73,7 @@ const AutoCompleteButtonContainerStyle = styled.div`
   border: solid 1px;
   border-radius: 25px;
   ${props => props.theme.borderColor.red1}
+  ${props => props.theme.media.tablet`padding: 0.1rem 0.2rem`}
   &:hover {
     border: solid 2px;
     ${props => props.theme.borderColor.red1}
@@ -80,6 +86,7 @@ const AutoCompleteButtonStyle = styled.button`
   border: none;
   outline: 0 none;
   font-weight: bold;
+  ${props => props.theme.media.tablet`font-size: 8px`}
 `;
 const MapStyle = styled.div.attrs({ id: 'map' })`
   width: 40vw;
@@ -105,6 +112,7 @@ class InteractiveMap extends Component {
     travelTimes: [],
     service: mapService,
     error: false,
+    errorMessage: '',
   };
 
   async componentDidMount() {
@@ -153,7 +161,11 @@ class InteractiveMap extends Component {
         travelMode || this.state.chosenTravelMode
       );
     } catch (err) {
-      console.log(err);
+      if (travelMode) {
+        console.log(err);
+      } else {
+        throw err;
+      }
     }
   };
 
@@ -188,7 +200,8 @@ class InteractiveMap extends Component {
           console.log(err);
 
           this.setState(state => {
-            return { error: true };
+            const errorMessage = errorHandler(err);
+            return { error: true, errorMessage };
           });
         }
       }
@@ -235,7 +248,9 @@ class InteractiveMap extends Component {
               </AutoCompleteButtonStyle>
             </AutoCompleteButtonContainerStyle>
           </AutoComplete>
-          <ErrorStyle error={this.state.error}> - No route found</ErrorStyle>
+          <ErrorStyle error={this.state.error}>
+            {this.state.errorMessage}
+          </ErrorStyle>
         </UpStyle>
         <DownStyle>
           <MapStyle />
